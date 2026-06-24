@@ -71,6 +71,8 @@ LeadForge/
 - **Postgres dedup by place_id** — never re-contact same business
 
 ## Deployment Status
+- **GitHub**: ✅ Repo created — https://github.com/abeermeer/LeadForge
+  - Public, MIT license, 10 topics added
 - **Frontend**: ✅ Deployed to Vercel
   - URL: https://frontend-alpha-teal-72.vercel.app
   - Production: https://frontend-jodg8rqp8-abeermeer1.vercel.app

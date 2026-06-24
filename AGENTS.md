@@ -73,17 +73,16 @@ cd frontend && npm install && npm run dev
 ```
 
 ## Deployment Status
-- **Frontend**: Deployed on Vercel
-  - URL: https://frontend-alpha-teal-72.vercel.app
-  - Env: `NEXT_PUBLIC_API_URL` = backend Railway URL
+- **GitHub**: https://github.com/abeermeer/LeadForge (public, MIT)
+- **Frontend**: https://frontend-alpha-teal-72.vercel.app (Vercel)
 - **Backend**: Deploy to Railway.app (next step)
 
 ## Deployment (Railway.app)
-1. Push project to GitHub
-2. Create Railway project from GitHub repo
+1. Go to https://railway.app → New Project → Deploy from GitHub
+2. Select abeermeer/LeadForge
 3. Add Postgres + Redis plugins
-4. Set environment variables (`GOOGLE_MAPS_API_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `DATABASE_URL`, `REDIS_URL`)
-5. Deploy — Railway auto-detects services
+4. Set env vars: `GOOGLE_MAPS_API_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON`
+5. Deploy — Railway auto-detects the FastAPI service
 6. Update `NEXT_PUBLIC_API_URL` on Vercel with actual Railway URL
 
 ## Compliance
