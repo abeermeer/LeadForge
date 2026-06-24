@@ -1,16 +1,20 @@
+import { Check, X, Edit3, Star, Phone, Mail } from 'lucide-react';
+
+const statusMap = {
+  pending: { label: 'Pending', cls: 'badge-slate' },
+  running: { label: 'Running', cls: 'badge-sky' },
+  completed: { label: 'Completed', cls: 'badge-emerald' },
+  failed: { label: 'Failed', cls: 'badge-rose' },
+  generated: { label: 'Draft', cls: 'badge-sky' },
+  no_email: { label: 'No Email', cls: 'badge-slate' },
+  sent: { label: 'Sent', cls: 'badge-emerald' },
+  draft: { label: 'Draft', cls: 'badge-sky' },
+};
+
 export default function StatusBadge({ status }) {
-  const map = {
-    pending: { label: 'Pending', class: 'badge-yellow' },
-    running: { label: 'Running', class: 'badge-blue' },
-    completed: { label: 'Completed', class: 'badge-green' },
-    failed: { label: 'Failed', class: 'badge-red' },
-    generated: { label: 'Draft', class: 'badge-blue' },
-    no_email: { label: 'Needs Email', class: 'badge-yellow' },
-    sent: { label: 'Sent', class: 'badge-green' },
-    draft: { label: 'Draft', class: 'badge-blue' },
+  const s = statusMap[status?.toLowerCase()] || {
+    label: status || 'Unknown',
+    cls: 'badge-slate',
   };
-
-  const s = map[status?.toLowerCase()] || { label: status || 'Unknown', class: 'badge-yellow' };
-
-  return <span className={`badge ${s.class}`}>{s.label}</span>;
+  return <span className={s.cls}>{s.label}</span>;
 }

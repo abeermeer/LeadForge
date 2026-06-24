@@ -1,5 +1,6 @@
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
+import { ArrowLeft, Loader2, MapPin } from 'lucide-react';
 import ResultsTable from '../../components/ResultsTable';
 import StatusBadge from '../../components/StatusBadge';
 
@@ -17,10 +18,8 @@ export default function CampaignPage() {
         fetch(`/api/search/${id}`),
         fetch(`/api/campaigns/${id}/leads`),
       ]);
-      const campData = await campRes.json();
-      const leadsData = await leadsRes.json();
-      setCampaign(campData);
-      setLeads(leadsData);
+      setCampaign(await campRes.json());
+      setLeads(await leadsRes.json());
     } catch (e) {
       console.error(e);
     } finally {
@@ -28,56 +27,51 @@ export default function CampaignPage() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [id]);
+  useEffect(() => { fetchData(); }, [id]);
 
   if (loading) {
     return (
-      <div>
-        <header className="header"><h1>LeadForge</h1></header>
-        <div className="container" style={{ maxWidth: 600, margin: '0 auto', textAlign: 'center', paddingTop: 100 }}>
-          <div className="skeleton" style={{ height: 40, width: 300, margin: '0 auto 20px' }} />
-          <div className="skeleton" style={{ height: 200 }} />
-        </div>
+      <div className="flex items-center justify-center py-32">
+        <Loader2 className="w-6 h-6 text-ember animate-spin" />
       </div>
     );
   }
 
   return (
-    <div>
-      <header className="header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div className="max-w-6xl mx-auto space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
           <button
-            className="btn"
-            style={{ background: 'var(--surface2)', padding: '6px 12px' }}
             onClick={() => router.push('/')}
+            className="btn-icon btn-ghost"
           >
-            ← Back
+            <ArrowLeft className="w-4 h-4" />
           </button>
-          <h1>LeadForge</h1>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-semibold text-pearl">
+                {campaign?.query || 'Campaign'}
+              </h1>
+              <StatusBadge status={campaign?.status} />
+            </div>
+            <p className="text-xs text-muted flex items-center gap-1 mt-0.5">
+              <MapPin className="w-3 h-3" />
+              {campaign?.location}
+            </p>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          {campaign && (
-            <>
-              <span style={{ fontSize: 14, color: 'var(--text2)' }}>
-                {campaign.query} in {campaign.location}
-              </span>
-              <StatusBadge status={campaign.status} />
-              <button
-                className="btn btn-primary"
-                onClick={() => router.push(`/export/${id}`)}
-              >
-                📤 Export to Sheets
-              </button>
-            </>
-          )}
-        </div>
-      </header>
 
-      <div className="container">
-        <ResultsTable leads={leads} campaignId={id} />
+        <button
+          onClick={() => router.push(`/export/${id}`)}
+          className="btn-primary text-sm"
+        >
+          Export to Sheets
+        </button>
       </div>
+
+      {/* Results */}
+      <ResultsTable leads={leads} campaignId={id} />
     </div>
   );
 }

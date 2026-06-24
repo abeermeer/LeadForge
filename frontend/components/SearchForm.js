@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Search, MapPin, SlidersHorizontal, Loader2, Target } from 'lucide-react';
 
 export default function SearchForm({ onStart }) {
   const [query, setQuery] = useState('');
@@ -32,61 +34,76 @@ export default function SearchForm({ onStart }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="glass fade-in">
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 18, marginBottom: 4 }}>New Lead Search</h2>
-        <p style={{ fontSize: 13, color: 'var(--text2)' }}>
-          Find local businesses without websites in any area.
-        </p>
-      </div>
-
-      <div className="grid-2">
-        <div>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: 'var(--text2)' }}>
-            Business Type *
-          </label>
-          <input
-            className="input"
-            placeholder="e.g. restaurant, plumber, dentist"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            required
-          />
+    <motion.form
+      onSubmit={handleSubmit}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="glass-panel p-6 lg:p-8"
+    >
+      <div className="flex items-center gap-3 mb-8">
+        <div className="w-10 h-10 rounded-xl bg-ember/10 flex items-center justify-center">
+          <Target className="w-5 h-5 text-ember" />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: 'var(--text2)' }}>
-            Location *
-          </label>
-          <input
-            className="input"
-            placeholder="e.g. Austin, TX"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            required
-          />
+          <h2 className="text-lg font-semibold text-pearl">New Lead Search</h2>
+          <p className="text-sm text-muted">Find businesses without websites in any area</p>
         </div>
       </div>
 
-      <div className="grid-2" style={{ marginTop: 16 }}>
+      <div className="grid md:grid-cols-2 gap-5">
         <div>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: 'var(--text2)' }}>
-            Search Radius (meters)
-          </label>
+          <label className="input-label">Business Type</label>
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+            <input
+              className="input pl-10"
+              placeholder="e.g. restaurant, plumber, dentist"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="input-label">Location</label>
+          <div className="relative">
+            <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+            <input
+              className="input pl-10"
+              placeholder="e.g. Austin, TX"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 mt-6 mb-3">
+        <SlidersHorizontal className="w-3.5 h-3.5 text-muted" />
+        <span className="text-xs font-medium text-muted uppercase tracking-wider">Filters</span>
+        <div className="flex-1 h-px bg-edge/30" />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-5">
+        <div>
+          <label className="input-label">Search Radius</label>
           <select
             className="input"
             value={radius}
             onChange={(e) => setRadius(parseInt(e.target.value))}
           >
-            <option value={5000}>5 km (small area)</option>
+            <option value={5000}>5 km — Small area</option>
             <option value={10000}>10 km</option>
             <option value={25000}>25 km</option>
-            <option value={50000}>50 km (city-wide)</option>
+            <option value={50000}>50 km — City-wide</option>
           </select>
         </div>
+
         <div>
-          <label style={{ display: 'block', fontSize: 13, marginBottom: 6, color: 'var(--text2)' }}>
-            Min Rating (optional)
-          </label>
+          <label className="input-label">Min. Rating (optional)</label>
           <input
             className="input"
             type="number"
@@ -100,14 +117,24 @@ export default function SearchForm({ onStart }) {
         </div>
       </div>
 
-      <button
+      <motion.button
         type="submit"
-        className="btn btn-primary"
         disabled={loading}
-        style={{ marginTop: 20, width: '100%' }}
+        className="btn-primary w-full mt-6 py-3 text-base"
+        whileTap={{ scale: 0.98 }}
       >
-        {loading ? 'Starting Search...' : '🔍 Find Leads'}
-      </button>
-    </form>
+        {loading ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Scanning...
+          </>
+        ) : (
+          <>
+            <Search className="w-4 h-4" />
+            Find Leads
+          </>
+        )}
+      </motion.button>
+    </motion.form>
   );
 }
