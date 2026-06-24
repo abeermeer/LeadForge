@@ -1,0 +1,18 @@
+{
+  "category": "retail",
+  "matches": ["shop", "store", "retail", "boutique", "grocery", "market", "clothing", "fashion", "gift", "antique", "furniture", "hardware", "electronics", "books", "florist"],
+  "angles": [
+    {
+      "name": "google_search",
+      "template": "Most people in {location} search Google before visiting a local shop. If {business_name} has no website, they won't find you — they'll go to a competitor who does.\n\nA simple site with your products, hours, and location costs less than a month of print advertising and works 24/7.\n\nWould you be open to a quick call to talk about it?"
+    },
+    {
+      "name": "instagram_limits",
+      "template": "I see {business_name} is active in {location} — but if you only rely on social media to reach customers, you're missing everyone who searches Google directly.\n\nA website isn't about replacing your Instagram. It's about being findable when people aren't scrolling.\n\nHappy to show you a few examples of local {category} sites I've built."
+    },
+    {
+      "name": "catalog",
+      "template": "Running a {category} business without a website means customers can't browse your products or check your hours unless they physically walk in or call. That's lost sales from people who just want to look first.\n\nA basic site with your product catalog takes just a few days to build.\n\nWorth a 5-minute chat?"
+    }
+  ]
+}

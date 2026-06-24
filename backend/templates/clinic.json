@@ -1,0 +1,18 @@
+{
+  "category": "clinic",
+  "matches": ["clinic", "salon", "barber", "spa", "dentist", "doctor", "medical", "therapy", "wellness", "massage", "nail", "laser", "aesthetic"],
+  "angles": [
+    {
+      "name": "trust",
+      "template": "When people search for {category} services in {location}, the first thing they check is a business's website. No website often means less trust. {business_name} has great reviews ({rating} stars), but customers can't find those details unless they dig.\n\nA simple site with your services, hours, and booking info would make it easy for people to choose you.\n\nWould you like to see how fast and affordable this can be?"
+    },
+    {
+      "name": "booking",
+      "template": "A lot of {category} businesses in {location} now let customers book online. {business_name} doesn't have a website, which means you're missing people who prefer to check availability and book without calling.\n\nAdding an online booking page is simpler than you'd think. I can set it up in days, not weeks.\n\nOpen to a quick no-pressure chat?"
+    },
+    {
+      "name": "credibility",
+      "template": "Your Google Maps listing shows {rating} stars from {review_count} reviews — that's great. But without a website, that credibility doesn't carry as far as it should.\n\nA professional site shows customers you're established and serious about your business.\n\nI'd love to show you what {business_name} could look like online. Free, no obligation."
+    }
+  ]
+}

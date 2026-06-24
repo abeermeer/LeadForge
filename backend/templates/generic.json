@@ -1,0 +1,18 @@
+{
+  "category": "generic",
+  "matches": [],
+  "angles": [
+    {
+      "name": "missed_opportunity",
+      "template": "I was looking at businesses in {location} and noticed {business_name} doesn't have a website yet. In 2026, that's rare — and it means customers searching for {category} services are landing on competitor pages instead of yours.\n\nA simple, professional site changes that. I build them fast and affordably.\n\nWould you be open to a quick conversation?"
+    },
+    {
+      "name": "competitor_advantage",
+      "template": "Your competitors in {location} have websites. {business_name} doesn't. That puts you at a disadvantage before a customer even picks up the phone.\n\nA single-page site with your contact info, services, and location is enough to get you on the map.\n\nGot 5 minutes this week to discuss?"
+    },
+    {
+      "name": "credibility_gap",
+      "template": "{business_name} has {rating} stars from {review_count} reviews on Google — but without a website, many potential customers never get to see that proof of quality.\n\nA website backs up your reputation with a professional presence that builds trust instantly.\n\nI'd love to show you how simple this can be."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+import '../styles/globals.css';
+import { Toaster } from 'react-hot-toast';
+
+export default function App({ Component, pageProps }) {
+  return (
+    <>
+      <Component {...pageProps} />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          className: 'toast',
+          duration: 4000,
+        }}
+      />
+    </>
+  );
+}

@@ -1,0 +1,18 @@
+{
+  "category": "restaurant",
+  "matches": ["restaurant", "cafe", "bakery", "coffee", "diner", "bistro", "pizzeria", "sushi", "bar", "grill"],
+  "angles": [
+    {
+      "name": "lost_traffic",
+      "template": "I was searching for {category} options in {location} and noticed {business_name} doesn't have a website yet. Most people search online before choosing where to eat — without a site, you're invisible to that traffic.\n\nA simple 1-page site with your menu, hours, and location is all you need to start getting found.\n\nWould you be open to a quick chat about it?"
+    },
+    {
+      "name": "competition",
+      "template": "Your competitors in {location} are showing up online with menus and reservation links. {business_name} doesn't have a website — meaning potential customers find them before they find you.\n\nA basic website levels the playing field. Cheap, fast, and easy to update.\n\nWorth a 5-minute conversation?"
+    },
+    {
+      "name": "delivery_trend",
+      "template": "More people in {location} are ordering takeout and delivery online every year. If {business_name} isn't showing up in Google searches with a menu and contact info, you're leaving money on the table.\n\nI build affordable websites for {category} businesses. Usually done in a week.\n\nInterested in seeing what that looks like?"
+    }
+  ]
+}
