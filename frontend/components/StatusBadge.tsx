@@ -1,6 +1,8 @@
-import { Check, X, Edit3, Star, Phone, Mail } from 'lucide-react';
+interface StatusBadgeProps {
+  status?: string;
+}
 
-const statusMap = {
+const statusMap: Record<string, { label: string; cls: string }> = {
   pending: { label: 'Pending', cls: 'badge-slate' },
   running: { label: 'Running', cls: 'badge-sky' },
   completed: { label: 'Completed', cls: 'badge-emerald' },
@@ -11,8 +13,8 @@ const statusMap = {
   draft: { label: 'Draft', cls: 'badge-sky' },
 };
 
-export default function StatusBadge({ status }) {
-  const s = statusMap[status?.toLowerCase()] || {
+export default function StatusBadge({ status }: StatusBadgeProps) {
+  const s = statusMap[status?.toLowerCase() ?? ''] || {
     label: status || 'Unknown',
     cls: 'badge-slate',
   };

@@ -1,15 +1,14 @@
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Users, Mail, FileCode, Zap, Menu, X, ChevronRight } from 'lucide-react';
-import { useState } from 'react';
+import { Search, Users, FileCode, Zap, Menu, ChevronRight } from 'lucide-react';
+import { useState, ReactNode } from 'react';
 
-const navItems = [
-  { href: '/', label: 'Search', icon: Search },
-  { href: null, label: 'Campaigns', icon: Users },
-  { href: null, label: 'Export', icon: FileCode },
-];
+interface LayoutProps {
+  children: ReactNode;
+  campaignId?: string | null;
+}
 
-export default function Layout({ children, campaignId }) {
+export default function Layout({ children, campaignId }: LayoutProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

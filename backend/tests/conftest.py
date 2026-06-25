@@ -19,14 +19,19 @@ _init_db_patcher.start()
 import pytest
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from backend.routers.search import router as search_router
 from backend.routers.leads import router as leads_router
 from backend.routers.export import router as export_router
 
+test_limiter = Limiter(key_func=get_remote_address)
+
 @pytest.fixture
 def app():
     app = FastAPI(title="LeadForge-Test")
+    app.state.limiter = test_limiter
 
     app.add_middleware(
         CORSMiddleware,
@@ -56,6 +61,7 @@ def app_with_key():
     from backend.auth import verify_api_key
 
     test_app = FastAPI(title="LeadForge-Test-Auth")
+    test_app.state.limiter = test_limiter
 
     test_app.add_middleware(
         CORSMiddleware,

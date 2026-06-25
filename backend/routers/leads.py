@@ -1,13 +1,20 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
+import html
+from fastapi import APIRouter, Depends, Query, HTTPException, Request
 from pydantic import BaseModel, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ..database import get_session
 from ..models.lead import Lead
 
 router = APIRouter()
+limiter = Limiter(key_func=get_remote_address)
 
 ALLOWED_FIELDS = {"email", "email_subject", "email_body", "angle_used", "email_status"}
+
+def sanitize(v: str | None) -> str | None:
+    return html.escape(v) if v else v
 
 class LeadUpdate(BaseModel):
     email: str | None = None
@@ -23,8 +30,15 @@ class LeadUpdate(BaseModel):
             raise ValueError("email_status must be one of: draft, generated, sent, failed")
         return v
 
+    @field_validator("email", "email_subject", "email_body", "angle_used")
+    @classmethod
+    def sanitize_fields(cls, v):
+        return sanitize(v)
+
 @router.get("/campaigns/{campaign_id}/leads")
+@limiter.limit("30/minute")
 async def get_leads(
+    request: Request,
     campaign_id: int,
     status: str | None = Query(None),
     db: AsyncSession = Depends(get_session),
@@ -37,7 +51,9 @@ async def get_leads(
     return [l.to_dict() for l in leads]
 
 @router.patch("/leads/{lead_id}")
+@limiter.limit("30/minute")
 async def update_lead(
+    request: Request,
     lead_id: int,
     data: LeadUpdate,
     db: AsyncSession = Depends(get_session),

@@ -3,6 +3,10 @@ import { motion } from 'framer-motion';
 import { Copy, CheckCircle, ExternalLink, FileCode, Terminal } from 'lucide-react';
 import toast from 'react-hot-toast';
 
+interface ScriptDisplayProps {
+  sheetUrl?: string;
+}
+
 const SCRIPT = `// LeadForge — Cold Email Sender
 // Paste into Extensions > Apps Script on your exported Sheet.
 // Set SENDER_NAME, then run setupTrigger() once.
@@ -55,7 +59,7 @@ function sendTest() {
   Logger.log('Test sent to ' + email);
 }`;
 
-export default function ScriptDisplay({ sheetUrl }) {
+export default function ScriptDisplay({ sheetUrl }: ScriptDisplayProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {

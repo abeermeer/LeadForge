@@ -2,14 +2,18 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, MapPin, SlidersHorizontal, Loader2, Target } from 'lucide-react';
 
-export default function SearchForm({ onStart }) {
+interface SearchFormProps {
+  onStart: (data: { campaign_id: number; status: string }) => void;
+}
+
+export default function SearchForm({ onStart }: SearchFormProps) {
   const [query, setQuery] = useState('');
   const [location, setLocation] = useState('');
   const [radius, setRadius] = useState(50000);
   const [minRating, setMinRating] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query || !location) return;
     setLoading(true);

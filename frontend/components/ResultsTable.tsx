@@ -4,17 +4,34 @@ import { Edit3, Mail, Star, ChevronDown, ChevronUp, MessageSquare, Phone } from 
 import StatusBadge from './StatusBadge';
 import toast from 'react-hot-toast';
 
-export default function ResultsTable({ leads, campaignId }) {
-  const [editingId, setEditingId] = useState(null);
-  const [edits, setEdits] = useState({});
-  const [localLeads, setLocalLeads] = useState(leads);
-  const [expandedId, setExpandedId] = useState(null);
+interface Lead {
+  id: number;
+  name: string;
+  category?: string;
+  rating?: number;
+  review_count?: number;
+  phone?: string;
+  email?: string;
+  email_subject?: string;
+  email_body?: string;
+}
+
+interface ResultsTableProps {
+  leads: Lead[];
+  campaignId: number | string;
+}
+
+export default function ResultsTable({ leads, campaignId }: ResultsTableProps) {
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const [localLeads, setLocalLeads] = useState<Lead[]>(leads);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   useEffect(() => {
     setLocalLeads(leads);
   }, [leads]);
 
-  const handleEdit = (lead) => {
+  const handleEdit = (lead: Lead) => {
     setEditingId(lead.id);
     setEdits({
       email: lead.email || '',
@@ -23,7 +40,7 @@ export default function ResultsTable({ leads, campaignId }) {
     });
   };
 
-  const handleSave = async (leadId) => {
+  const handleSave = async (leadId: number) => {
     try {
       const res = await fetch(`/api/leads/${leadId}`, {
         method: 'PATCH',
