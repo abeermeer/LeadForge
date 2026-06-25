@@ -54,10 +54,9 @@
                   │      Railway.app (Backend)           │
                   │           FastAPI (Python)            │
                   ├──────────────────────────────────────┤
-                  │  ┌──────────┐  ┌──────────────────┐  │
-                  │  │ Postgres │  │ Redis + RQ       │  │
-                  │  │ (Leads)  │  │ (Job Queue)      │  │
-                  │  └──────────┘  └──────────────────┘  │
+                  │  ┌──────────────────────────────────┐  │
+                  │  │ Postgres (Leads + Campaigns)    │  │
+                  │  └──────────────────────────────────┘  │
                   └────────────────┬─────────────────────┘
                                    │ HTTP
     ┌──────────────────────────────┼──────────────────────────┐
@@ -83,7 +82,7 @@ Search Form → POST /api/search → Grid Search (Places API)
 |-------|-----------|
 | **Backend** | Python 3.11+, FastAPI, SQLAlchemy 2.0 (async), PostgreSQL |
 | **Frontend** | Next.js 14, React 18, Tailwind CSS, Framer Motion |
-| **Queue** | Redis, RQ |
+| **Background Tasks** | FastAPI BackgroundTasks (async) |
 | **APIs** | Google Places API (New), Google Sheets API v4 |
 | **Automation** | Google Apps Script (Gmail send, quota-aware) |
 | **Infrastructure** | Railway.app, Vercel, Docker Compose (local dev) |
@@ -112,7 +111,7 @@ pip install -r requirements.txt
 cd ../frontend
 npm install
 
-# Start local infrastructure (Postgres + Redis)
+# Start local infrastructure (Postgres only)
 cd ..
 docker compose up -d
 ```
@@ -125,7 +124,6 @@ Create `backend/.env`:
 GOOGLE_MAPS_API_KEY=your_places_api_key
 GOOGLE_SERVICE_ACCOUNT_JSON=your_base64_service_account_json
 DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/leadforge
-REDIS_URL=redis://localhost:6379/0
 ```
 
 ### Run
@@ -158,7 +156,7 @@ Set `NEXT_PUBLIC_API_URL` to your Railway backend URL (e.g. `https://leadforge-p
 
 1. Push to GitHub
 2. Create a Railway project → "Deploy from GitHub repo" → select `abeermeer/LeadForge`
-3. Add **PostgreSQL** and **Redis** plugins (env vars auto-injected)
+3. Add **PostgreSQL** plugin (DATABASE_URL auto-injected)
 4. Set remaining env vars: `GOOGLE_MAPS_API_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON`
 5. Railway builds using the `Dockerfile` at repo root
 
@@ -237,7 +235,6 @@ Allowlisted fields: `email`, `email_subject`, `email_body`, `angle_used`, `email
 | `GOOGLE_MAPS_API_KEY` | Google Places API (New) key | ✅ |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | Service account key (base64 or raw JSON) | ✅ |
 | `DATABASE_URL` | PostgreSQL with async driver | ✅ |
-| `REDIS_URL` | Redis connection string | ✅ |
 | `NEXT_PUBLIC_API_URL` | Backend URL (frontend only) | ✅ |
 
 ## Project Structure
