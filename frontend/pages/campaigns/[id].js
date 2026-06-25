@@ -27,7 +27,11 @@ export default function CampaignPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, [id]);
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+  }, [id]);
 
   if (loading) {
     return (

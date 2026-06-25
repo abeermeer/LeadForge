@@ -1,12 +1,16 @@
 import asyncio
 import aiohttp
 import math
+import logging
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..database import async_session
 from ..models.campaign import Campaign, CampaignStatus
 from ..models.lead import Lead
 from ..config import GOOGLE_MAPS_API_KEY, MAX_RESULTS_PER_QUERY, SEARCH_RADIUS_METERS, OVERLAP_FACTOR
+from .email_writer import generate_emails_for_campaign
+
+logger = logging.getLogger(__name__)
 
 PLACES_API_BASE = "https://places.googleapis.com/v1/places:searchText"
 FIELDS_MASK = "places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.primaryType"
@@ -54,11 +58,20 @@ async def search_places(session: aiohttp.ClientSession, lat: float, lng: float, 
     try:
         async with session.post(PLACES_API_BASE, json=body, headers=headers) as resp:
             if resp.status != 200:
+                text = await resp.text()
+                logger.error(f"Places API error {resp.status} at ({lat},{lng}): {text[:200]}")
                 return []
             data = await resp.json()
             places = data.get("places", [])
             return places
-    except Exception:
+    except asyncio.TimeoutError:
+        logger.warning(f"Places API timeout at ({lat},{lng})")
+        return []
+    except aiohttp.ClientError as e:
+        logger.error(f"Places API request failed at ({lat},{lng}): {e}")
+        return []
+    except Exception as e:
+        logger.exception(f"Unexpected error in search_places at ({lat},{lng}): {e}")
         return []
 
 async def run_grid_search(campaign_id: int, req, db_session: AsyncSession):
@@ -123,3 +136,5 @@ async def run_grid_search(campaign_id: int, req, db_session: AsyncSession):
         campaign.total_leads = len(all_leads)
         campaign.status = CampaignStatus.COMPLETED.value
         await db.commit()
+
+    await generate_emails_for_campaign(campaign_id)

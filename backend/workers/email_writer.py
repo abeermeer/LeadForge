@@ -39,7 +39,15 @@ def generate_email(lead_name: str, category: str, location: str, rating: float, 
         rating=rating or "N/A",
         review_count=review_count or "many",
     )
-    subject = f"Quick question about {lead_name}"
+    subjects = [
+        f"Quick question about {lead_name}",
+        f"Question about {lead_name}",
+        f"Hi from a local customer of {lead_name}",
+        f"Quick question: {lead_name}",
+        f"{lead_name} — a quick thought",
+        f"Regarding {lead_name}",
+    ]
+    subject = random.choice(subjects)
     return subject, body, angle["name"]
 
 async def generate_emails_for_campaign(campaign_id: int):

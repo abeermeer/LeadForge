@@ -4,12 +4,12 @@
 LeadForge is a lead generation + cold email outreach tool. Finds businesses on Google Maps without websites, writes personalized emails via angle-based templates, exports to Google Sheets, and provides a copy-paste Apps Script for automated sending.
 
 ## Tech Stack
-- **Backend**: FastAPI (Python 3.11+)
-- **Frontend**: Next.js 14 (React)
+- **Backend**: FastAPI (Python 3.11+, async SQLAlchemy)
+- **Frontend**: Next.js 14 (React, Tailwind CSS, Framer Motion)
 - **Database**: PostgreSQL (async via SQLAlchemy + asyncpg)
 - **Queue**: Redis + RQ (background job processing)
 - **APIs**: Google Places API (New), Google Sheets API
-- **Deployment**: Railway.app (auto-deploy from GitHub)
+- **Deployment**: Railway.app (backend via Dockerfile), Vercel (frontend)
 
 ## Architecture
 
@@ -58,34 +58,37 @@ Features:
 
 ## Environment Variables
 ```
-GOOGLE_MAPS_API_KEY=your_key
-GOOGLE_SERVICE_ACCOUNT_JSON=base64_or_json
-DATABASE_URL=postgresql+asyncpg://...
-REDIS_URL=redis://...
+GOOGLE_MAPS_API_KEY=your_key                 # NOT set yet — user needs to provide
+GOOGLE_SERVICE_ACCOUNT_JSON=base64_or_json   # NOT set yet — user needs to provide
+DATABASE_URL=postgresql+asyncpg://...         # Railway Postgres auto-injects
+REDIS_URL=redis://...                         # Railway Redis auto-injects
 ```
+
+## Deployment Status
+- **GitHub**: https://github.com/abeermeer/LeadForge (public, MIT)
+- **Frontend**: https://frontend-alpha-teal-72.vercel.app (Vercel, deployed)
+- **Backend**: https://leadforge-production-126b.up.railway.app (Railway, deployed)
+  - PostgreSQL plugin: ✅ Added
+  - Redis plugin: ✅ Added
+  - GOOGLE_MAPS_API_KEY: ❌ Not set yet (placeholder exists)
+  - GOOGLE_SERVICE_ACCOUNT_JSON: ❌ Not set yet
+
+## Known Issues
+- `config.py` auto-converts `postgresql://` → `postgresql+asyncpg://` for Railway compat
+- `init_db()` gracefully degrades if DB unavailable (logs warning, server still starts)
+- Railway deploys from GitHub via Dockerfile — `railway.json` configures builder
 
 ## Local Development
 ```bash
 docker-compose up -d  # Start Postgres + Redis
 cd backend && pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+uvicorn backend.main:app --reload --port 8000
 cd frontend && npm install && npm run dev
 ```
 
-## Deployment Status
-- **GitHub**: https://github.com/abeermeer/LeadForge (public, MIT)
-- **Frontend**: https://frontend-alpha-teal-72.vercel.app (Vercel)
-- **Backend**: Deploy to Railway.app (next step)
-
-## Deployment (Railway.app)
-1. Go to https://railway.app → New Project → Deploy from GitHub
-2. Select abeermeer/LeadForge
-3. Add Postgres + Redis plugins
-4. Set env vars: `GOOGLE_MAPS_API_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON`
-5. Deploy — Railway auto-detects the FastAPI service
-6. Update `NEXT_PUBLIC_API_URL` on Vercel with actual Railway URL
-
-## Compliance
-- CAN-SPAM: unsubscribe link, physical address, accurate subject
-- Apps Script throttles to avoid spam flags
-- Dedup prevents re-contacting same business
+## Next Steps (pending)
+1. Set GOOGLE_MAPS_API_KEY env var on Railway (user provides key)
+2. Set GOOGLE_SERVICE_ACCOUNT_JSON env var on Railway (user provides JSON)
+3. Redeploy Railway service after env vars set
+4. Run end-to-end test: search → generate emails → export to Sheets
+5. Test Apps Script with exported Sheet

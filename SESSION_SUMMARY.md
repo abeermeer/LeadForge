@@ -1,67 +1,45 @@
-# Session Summary — LeadForge
-
-## Date
-June 24, 2026
+# Session Summary — LeadForge (June 24, 2026)
 
 ## What Was Built
 Complete lead generation + outreach automation tool (LeadForge).
 
-### Architecture
-- **Backend**: FastAPI (Python) — handles Places API searches, email generation, Sheets export
-- **Frontend**: Next.js dashboard — search form, campaign status, results table, export flow
-- **Database**: Postgres — lead storage, campaign history, dedup by place_id
-- **Queue**: Redis + RQ — background jobs for long-running tasks
-- **Deployment**: Railway.app — all services deploy via GitHub
+### Backend (FastAPI)
+- `main.py` — FastAPI entry point with lifespan, CORS, 4 routers registered
+- `config.py` — Env var loading with Railway DATABASE_URL compat fix
+- `database.py` — Async SQLAlchemy engine with graceful init_db() failure handling
+- `models/` — Campaign + Lead SQLAlchemy async models
+- `routers/` — search.py, leads.py, export.py
+- `workers/` — grid_search.py (Places API), email_writer.py (angle bank), sheet_exporter.py
+- `templates/` — 4 angle bank JSON files (restaurant, clinic, retail, generic)
 
-### Components Built
-1. **Places API Grid Search** — searches Google Maps via official API, subdivides area into overlapping circles (60-result cap per query), filters out businesses WITH websites
-2. **Angle Bank Email Writer** — 3 templates per category (restaurant, clinic, retail, generic) with rotating angles to avoid repetition
-3. **Google Sheets Export** — exports leads + generated emails to a new Sheet via service account
-4. **Static Apps Script** — quata-aware batch sender with trigger-based scheduling, status tracking, CAN-SPAM footer
-5. **Next.js Dashboard** — 4-page UI with modern glassmorphism design
+### Frontend (Next.js 14)
+- 4 pages: index, campaigns/[id], export/[id], 404
+- 4 components: SearchForm, ResultsTable, ScriptDisplay, StatusBadge
+- Premium redesign: Tailwind CSS, Framer Motion, Lucide icons, DM Sans, Obsidian & Gold theme
+- Google Sign-In landing page with restricted domain access
 
-## File Structure
-```
-LeadForge/
-├── backend/
-│   ├── main.py              # FastAPI entry point
-│   ├── config.py             # Env vars (API keys, DB URLs)
-│   ├── database.py           # SQLAlchemy async engine
-│   ├── models/
-│   │   ├── campaign.py       # Campaign table model
-│   │   └── lead.py           # Lead table model
-│   ├── routers/
-│   │   ├── search.py         # POST /search, GET /search/{id}
-│   │   ├── leads.py          # GET /campaigns/{id}/leads, PATCH /leads/{id}
-│   │   └── export.py         # POST /campaigns/{id}/export
-│   ├── workers/
-│   │   ├── grid_search.py    # Places API grid search + dedup
-│   │   ├── email_writer.py   # Angle bank template engine
-│   │   └── sheet_exporter.py # Google Sheets API export
-│   ├── templates/            # Angle bank JSON files
-│   │   ├── restaurant.json
-│   │   ├── clinic.json
-│   │   ├── retail.json
-│   │   └── generic.json
-│   └── requirements.txt
-├── frontend/
-│   ├── pages/
-│   │   ├── index.js          # Search form + live polling
-│   │   ├── campaigns/[id].js # Results table + edit
-│   │   └── export/[id].js    # Sheet export + script display
-│   ├── components/
-│   │   ├── SearchForm.js
-│   │   ├── ResultsTable.js
-│   │   ├── ScriptDisplay.js
-│   │   └── StatusBadge.js
-│   └── styles/globals.css
-├── scripts/
-│   └── apps_script.gs        # Static Apps Script (copy-paste)
-├── docker-compose.yml        # Postgres + Redis for local dev
-├── railway.json              # Railway deployment config
-├── SESSION_SUMMARY.md
-└── AGENTS.md
-```
+### Infrastructure
+- `Dockerfile` — python:3.11-slim, uvicorn on port 8000
+- `railway.json` — DOCKERFILE builder, 1 replica, ON_FAILURE restart
+- `.env.production` — NEXT_PUBLIC_API_URL set to Railway backend URL
+
+## Deployment Status — **LIVE**
+
+| Component | URL | Status |
+|-----------|-----|--------|
+| Frontend | https://frontend-alpha-teal-72.vercel.app | ✅ Live |
+| Backend | https://leadforge-production-126b.up.railway.app | ✅ Live (health: ok) |
+| GitHub | https://github.com/abeermeer/LeadForge | ✅ Public, MIT |
+| PostgreSQL | Railway plugin | ✅ Added (auto-injects DATABASE_URL) |
+| Redis | Railway plugin | ✅ Added (auto-injects REDIS_URL) |
+| GOOGLE_MAPS_API_KEY | Railway env var | ❌ Placeholder set, needs real key |
+| GOOGLE_SERVICE_ACCOUNT_JSON | Railway env var | ❌ Not set, needs service account |
+
+## Key Commands Used
+- Railway API (GraphQL) for deployment management, env var setting
+- Vercel API for env var updates
+- `railway link` failed — project in different workspace than CLI token
+- `vercel deploy --prod` for frontend redeployment
 
 ## Key Decisions
 - **Places API over scraping** — legally safe, no CAPTCHAs, stable
@@ -69,18 +47,18 @@ LeadForge/
 - **Static Apps Script** — written once, reused for every campaign
 - **Railway.app hosting** — 24/7 uptime, no computer needed
 - **Postgres dedup by place_id** — never re-contact same business
+- **Dockerfile over Nixpacks** — reliable builds despite Railway auto-detecting Next.js
 
-## Deployment Status
-- **GitHub**: ✅ Repo created — https://github.com/abeermeer/LeadForge
-  - Public, MIT license, 10 topics added
-- **Frontend**: ✅ Deployed to Vercel
-  - URL: https://frontend-alpha-teal-72.vercel.app
-  - Production: https://frontend-jodg8rqp8-abeermeer1.vercel.app
-  - Env: `NEXT_PUBLIC_API_URL` set to `https://leadforge-backend.railway.app`
+## Issues Encountered & Fixes
+1. **Docker build succeeded but container crashed** — DATABASE_URL had `postgresql://` prefix instead of `postgresql+asyncpg://` for async SQLAlchemy. Fixed by auto-replacing prefix in config.py.
+2. **init_db() crashed FastAPI lifespan** — If DB unavailable on startup, the whole server crashed. Fixed by wrapping in try/except with graceful warning.
+3. **Railway CLI can't access LeadForge project** — Project created under different workspace. Used GraphQL API directly with service ID.
+4. **Railway URL returns Next.js frontend** — Railway auto-detected Next.js from repo and deployed it. The Dockerfile-based backend was at a different URL (`leadforge-production-126b.up.railway.app`).
+5. **Vercel CLI interactive prompts** — Used Vercel REST API directly to update env vars.
 
-## What's Next
-1. Deploy backend to Railway.app
-2. Update `NEXT_PUBLIC_API_URL` on Vercel once Railway URL is known
-3. Add Google Maps API key to Railway env vars
-4. Integration testing with live Places API calls
-5. Test with real campaigns
+## Remaining Tasks
+1. Get user's **Google Maps API key** → set on Railway → test Places API search
+2. Get user's **Google Service Account JSON** → set on Railway → test Sheets export
+3. End-to-end test: search → email generation → export → Apps Script
+4. Verify Postgres/Redis worker queue works end-to-end
+5. Custom domain setup (optional)

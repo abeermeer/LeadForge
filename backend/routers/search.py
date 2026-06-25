@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..database import get_session
@@ -47,5 +47,5 @@ async def get_search_status(
     result = await db.execute(select(Campaign).where(Campaign.id == campaign_id))
     campaign = result.scalar_one_or_none()
     if not campaign:
-        return {"error": "Campaign not found"}, 404
+        raise HTTPException(status_code=404, detail="Campaign not found")
     return campaign.to_dict()
