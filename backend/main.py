@@ -1,8 +1,12 @@
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from .database import init_db
+from sqlalchemy import text
+from .database import init_db, async_session
 from .routers import search, leads, export
+
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,4 +28,11 @@ app.include_router(export.router, prefix="/api", tags=["export"])
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok"}
+    db_ok = False
+    try:
+        async with async_session() as session:
+            await session.execute(text("SELECT 1"))
+        db_ok = True
+    except Exception as e:
+        logger.warning(f"Health check DB failure: {e}")
+    return {"status": "ok" if db_ok else "degraded", "database": "connected" if db_ok else "disconnected"}

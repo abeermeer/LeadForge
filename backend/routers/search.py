@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..database import get_session
 from ..models.campaign import Campaign, CampaignStatus
@@ -12,7 +12,7 @@ class SearchRequest(BaseModel):
     location: str
     lat: float | None = None
     lng: float | None = None
-    radius: int = 50000
+    radius: int = Field(default=50000, ge=100)
     min_rating: float | None = None
 
 @router.post("/search")

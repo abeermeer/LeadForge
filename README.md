@@ -29,7 +29,7 @@
 - **No-Website Detection** — Automatically filters businesses that already have a website
 - **Smart Email Generation** — 3 category-specific angles per vertical (restaurant, clinic, retail, generic) with rotating templates and varied subject lines
 - **Google Sheets Export** — One-click export with all leads, generated emails, and status tracking
-- **Apps Script Automation** — Copy-paste script sends batch emails from your Gmail (8 per 20 min, CAN-SPAM compliant)
+- **Apps Script Automation** — Copy-paste script sends batch emails from your Gmail (8 per 20 min, designed with opt-out footer)
 - **Duplicate Prevention** — Dedup by Google Place ID across all campaigns
 - **Background Processing** — Search runs asynchronously; poll campaign status from the dashboard
 - **Live Deployment** — Backend on Railway, frontend on Vercel, auto-deploys from GitHub
@@ -299,8 +299,8 @@ Leads export to Google Sheets → paste the provided Apps Script → run `setupT
 **Duplicate prevention?**  
 Deduplication is enforced at the database level with a unique constraint on Google Place ID. Never contact the same business twice.
 
-**CAN-SPAM compliance?**  
-Every email includes an unsubscribe option, sender identity, and accurate subject lines. The Apps Script respects sending limits.
+**Is this CAN-SPAM compliant?**  
+The generated emails include an unsubscribe option and sender identity as a good-faith effort. Consult a legal professional to ensure your specific use case meets compliance requirements.
 
 ## License
 
