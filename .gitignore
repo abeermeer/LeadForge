@@ -34,3 +34,12 @@ pgdata/
 # Data
 data/*.csv
 *.csv
+
+# Internal docs (not for public)
+SESSION_SUMMARY.md
+AGENTS.md
+
+# Env
+backend/.env
+frontend/.env.local
+frontend/.env.production

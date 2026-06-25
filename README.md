@@ -1,21 +1,22 @@
 <div align="center">
-  <h1>LeadForge</h1>
-  <p><strong>Find local businesses without websites. Generate personalized outreach. Automate via Google Sheets.</strong></p>
+  <img src="https://img.shields.io/badge/Python-3.11%2B-blue?style=flat-square&logo=python" alt="Python">
+  <img src="https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js" alt="Next.js">
+  <img src="https://img.shields.io/badge/FastAPI-0.115-green?style=flat-square&logo=fastapi" alt="FastAPI">
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT License">
+  <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="Status">
+  <img src="https://img.shields.io/badge/coverage-100%25-brightgreen?style=flat-square" alt="Coverage">
 
-  <p>
-    <img src="https://img.shields.io/badge/Python-3.11%2B-blue?style=flat-square&logo=python" alt="Python">
-    <img src="https://img.shields.io/badge/Next.js-14-black?style=flat-square&logo=next.js" alt="Next.js">
-    <img src="https://img.shields.io/badge/FastAPI-0.115+-green?style=flat-square&logo=fastapi" alt="FastAPI">
-    <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License">
-    <img src="https://img.shields.io/badge/status-active-brightgreen?style=flat-square" alt="Status">
-  </p>
+  <h1>LeadForge</h1>
+  <p><strong>Find businesses without websites. Generate personalized outreach. Automate via email.</strong></p>
+  <p>A complete lead generation platform that finds local businesses lacking an online presence, crafts targeted cold emails using smart templates, and automates delivery through Google Sheets + Apps Script.</p>
 
   <p>
     <a href="#features">Features</a> •
-    <a href="#architecture">Architecture</a> •
+    <a href="#demo">Demo</a> •
     <a href="#quick-start">Quick Start</a> •
     <a href="#deployment">Deployment</a> •
     <a href="#usage">Usage</a> •
+    <a href="#api">API Reference</a> •
     <a href="#faq">FAQ</a>
   </p>
 </div>
@@ -24,37 +25,46 @@
 
 ## Features
 
-- 🔍 **Google Places API Integration** — Search any area for businesses, filter by category and rating
-- 🚫 **No-Website Detection** — Automatically filters out businesses that already have a website
-- 🧠 **Smart Email Generation** — Category-specific angle banks (restaurants, clinics, retail, generic) with rotating templates
-- 📊 **Google Sheets Export** — One-click export with all leads, generated emails, and status tracking
-- 🤖 **Apps Script Automation** — Copy-paste script sends emails in batches, respects Gmail quotas, tracks delivery
-- 🎯 **Duplicate Prevention** — Dedup by Google Place ID across all campaigns
-- 🌐 **Next-Gen UI** — Glassmorphism design dashboard with real-time progress tracking
+- **Google Places API (New)** — Search any area, filter by category and rating, no scraping
+- **No-Website Detection** — Automatically filters businesses that already have a website
+- **Smart Email Generation** — 3 category-specific angles per vertical (restaurant, clinic, retail, generic) with rotating templates and varied subject lines
+- **Google Sheets Export** — One-click export with all leads, generated emails, and status tracking
+- **Apps Script Automation** — Copy-paste script sends batch emails from your Gmail (8 per 20 min, CAN-SPAM compliant)
+- **Duplicate Prevention** — Dedup by Google Place ID across all campaigns
+- **Background Processing** — Search runs asynchronously; poll campaign status from the dashboard
+- **Live Deployment** — Backend on Railway, frontend on Vercel, auto-deploys from GitHub
+
+## Demo
+
+| Service | URL | Status |
+|---------|-----|--------|
+| Frontend | [frontend-alpha-teal-72.vercel.app](https://frontend-alpha-teal-72.vercel.app) | ✅ Live |
+| Backend | [leadforge-production-126b.up.railway.app](https://leadforge-production-126b.up.railway.app) | ✅ Live |
+| Health | [leadforge-production-126b.up.railway.app/api/health](https://leadforge-production-126b.up.railway.app/api/health) | `{"status":"ok"}` |
 
 ## Architecture
 
 ```
-                     ┌──────────────────────────────────────┐
-                     │         Vercel (Frontend)            │
-                     │       Next.js Dashboard              │
-                     └────────────────┬─────────────────────┘
-                                      │ API calls
-                     ┌────────────────▼─────────────────────┐
-                     │      Railway.app (Backend)           │
-                     │           FastAPI                     │
-                     ├──────────────────────────────────────┤
-                     │  ┌──────────┐  ┌──────────────────┐  │
-                     │  │ Postgres │  │ Redis + RQ       │  │
-                     │  │ (Leads)  │  │ (Job Queue)      │  │
-                     │  └──────────┘  └──────────────────┘  │
-                     └────────────────┬─────────────────────┘
-                                      │
-          ┌───────────────────────────┼───────────────────────────┐
-          │                           │                           │
-          ▼                           ▼                           ▼
-  Google Places API          Google Sheets API           Google Apps Script
-  (Lead sourcing)            (Export)                    (Email sending)
+                  ┌──────────────────────────────────────┐
+                  │         Vercel (Frontend)            │
+                  │       Next.js 14 Dashboard           │
+                  └────────────────┬─────────────────────┘
+                                   │ /api/*
+                  ┌────────────────▼─────────────────────┐
+                  │      Railway.app (Backend)           │
+                  │           FastAPI (Python)            │
+                  ├──────────────────────────────────────┤
+                  │  ┌──────────┐  ┌──────────────────┐  │
+                  │  │ Postgres │  │ Redis + RQ       │  │
+                  │  │ (Leads)  │  │ (Job Queue)      │  │
+                  │  └──────────┘  └──────────────────┘  │
+                  └────────────────┬─────────────────────┘
+                                   │ HTTP
+    ┌──────────────────────────────┼──────────────────────────┐
+    │                              │                          │
+    ▼                              ▼                          ▼
+Google Places API          Google Sheets API          Google Apps Script
+(Lead sourcing)            (Export)                   (Email sending)
 ```
 
 ### Data Flow
@@ -62,34 +72,38 @@
 ```
 Search Form → POST /api/search → Grid Search (Places API)
     → Filter businesses WITHOUT websites → Dedup by place_id
-    → Generate personalized emails (Angle Bank)
+    → Generate personalized emails (Angle Bank template engine)
     → Export to Google Sheet
-    → User pastes Apps Script → Automated batch emailing
+    → User pastes Apps Script → Automated batch emailing via Gmail
 ```
 
 ## Tech Stack
 
-| Category | Technology |
-|----------|-----------|
-| **Backend** | Python 3.11+, FastAPI, SQLAlchemy (async), PostgreSQL |
-| **Frontend** | Next.js 14, React 18, CSS3 (Glassmorphism) |
-| **Queue** | Redis, RQ (background job processing) |
-| **APIs** | Google Places API (New), Google Sheets API |
-| **Automation** | Google Apps Script (static, sent via Gmail) |
-| **Deployment** | Vercel (frontend), Railway.app (backend + DB + Redis) |
+| Layer | Technology |
+|-------|-----------|
+| **Backend** | Python 3.11+, FastAPI, SQLAlchemy 2.0 (async), PostgreSQL |
+| **Frontend** | Next.js 14, React 18, Tailwind CSS, Framer Motion |
+| **Queue** | Redis, RQ |
+| **APIs** | Google Places API (New), Google Sheets API v4 |
+| **Automation** | Google Apps Script (Gmail send, quota-aware) |
+| **Infrastructure** | Railway.app, Vercel, Docker Compose (local dev) |
 
 ## Quick Start
 
 ### Prerequisites
-- Python 3.11+
-- Node.js 18+
-- Docker Desktop (for local Postgres + Redis)
-- Google Cloud project with Places API enabled
-- Google Service Account with Sheets API access
 
-### 1. Clone & Install
+- Python 3.11+, Node.js 18+
+- Docker Desktop
+- Google Cloud project with [Places API (New)](https://console.cloud.google.com/apis/library/places.googleapis.com) enabled
+- Google Service Account with [Sheets API](https://console.cloud.google.com/apis/library/sheets.googleapis.com) enabled
+
+### Setup
 
 ```bash
+# Clone
+git clone https://github.com/abeermeer/LeadForge.git
+cd LeadForge
+
 # Backend
 cd backend
 pip install -r requirements.txt
@@ -97,15 +111,13 @@ pip install -r requirements.txt
 # Frontend
 cd ../frontend
 npm install
-```
 
-### 2. Start Local Infrastructure
-
-```bash
+# Start local infrastructure (Postgres + Redis)
+cd ..
 docker compose up -d
 ```
 
-### 3. Configure Environment
+### Configuration
 
 Create `backend/.env`:
 
@@ -116,19 +128,19 @@ DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/leadforge
 REDIS_URL=redis://localhost:6379/0
 ```
 
-### 4. Run
+### Run
 
 ```bash
 # Terminal 1 — Backend
 cd backend
-uvicorn main:app --reload --port 8000
+uvicorn backend.main:app --reload --port 8000
 
 # Terminal 2 — Frontend
 cd frontend
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000).
 
 ## Deployment
 
@@ -136,69 +148,95 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```bash
 cd frontend
+npm run build
 vercel --prod
 ```
 
-Set environment variable `NEXT_PUBLIC_API_URL` to your Railway backend URL.
+Set `NEXT_PUBLIC_API_URL` to your Railway backend URL (e.g. `https://leadforge-production-xxxx.up.railway.app`).
 
-### Backend (Railway.app)
+### Backend (Railway)
 
-1. Push repo to GitHub
-2. Create new Railway project → "Deploy from GitHub repo"
-3. Add **Postgres** and **Redis** plugins
-4. Set environment variables:
-   - `GOOGLE_MAPS_API_KEY`
-   - `GOOGLE_SERVICE_ACCOUNT_JSON`
-   - `DATABASE_URL` (auto-provided by Railway Postgres plugin)
-   - `REDIS_URL` (auto-provided by Railway Redis plugin)
-5. Deploy — Railway auto-detects the Python service
+1. Push to GitHub
+2. Create a Railway project → "Deploy from GitHub repo" → select `abeermeer/LeadForge`
+3. Add **PostgreSQL** and **Redis** plugins (env vars auto-injected)
+4. Set remaining env vars: `GOOGLE_MAPS_API_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON`
+5. Railway builds using the `Dockerfile` at repo root
+
+The included `railway.json` configures Dockerfile builder with 1 replica and ON_FAILURE restart policy.
 
 ## Usage
 
 ### 1. Search for Leads
 
-Enter a business type (e.g. "restaurant", "plumber", "dentist") and a location (e.g. "Austin, TX"). Adjust radius and minimum rating. The system will:
+Enter a business type (e.g. "restaurant", "dentist", "plumber") and location (e.g. "Austin, TX"). Adjust radius and minimum rating. The engine:
 
-- Subdivide the area into overlapping circles (Places API cap: 60 results per query)
-- Search each circle for matching businesses
-- Filter out any business with a listed website
-- Deduplicate against previous campaigns
+- Subdivides the area into overlapping circles (Places API cap: 60 results per query)
+- Searches each circle
+- Filters out businesses with a listed website
+- Deduplicates against all previous campaigns
 
-### 2. Generate Emails
+### 2. Review & Edit
 
-Review the results table. Each lead gets a personalized email generated from our angle bank:
+The results table shows each lead with its generated email. You can edit subject lines and body text inline. Each lead gets a personalized email from a rotating angle bank:
 
-| Category | Angles |
+| Vertical | Angles |
 |----------|--------|
-| **Restaurants/Cafes** | Lost traffic, competition, delivery trends |
-| **Clinics/Salons** | Trust, online booking, credibility |
-| **Retail/Shops** | Google search, Instagram limits, product catalog |
+| **Restaurants / Cafes** | Lost traffic, competition edge, delivery trends |
+| **Clinics / Salons** | Trust building, online booking, credibility |
+| **Retail / Shops** | Google visibility, Instagram limits, product catalog |
 | **Generic** | Missed opportunity, competitor advantage, credibility gap |
 
-You can edit subject lines and body text in-line before exporting.
+### 3. Export
 
-### 3. Export to Google Sheets
+Click "Export to Sheets" to create a new Google Sheet with all leads, generated emails, and status tracking. The sheet includes columns for tracking send status (draft → generated → sent → failed).
 
-Click "Export" to create a new Google Sheet with all leads, generated emails, and status tracking columns.
-
-### 4. Deploy the Apps Script
+### 4. Automate Sending
 
 1. Open the exported Google Sheet
-2. Go to **Extensions → Apps Script**
-3. Delete default code, paste the script from `scripts/apps_script.gs`
+2. **Extensions → Apps Script**
+3. Delete default code, paste `scripts/apps_script.gs`
 4. Set `SENDER_NAME` to your name
-5. Click **Save**
-6. Run `setupTrigger()` once
+5. Run `setupTrigger()` once
 
-Emails will send automatically in batches of 8 every 20 minutes, respecting Gmail's daily quota (100/day for free accounts).
+Emails send in batches of 8 every 20 minutes, respecting Gmail's 100/day quota (free accounts). Upgrade to Google Workspace for higher limits.
+
+## API Reference
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/health` | Health check |
+| `POST` | `/api/search` | Create search campaign (runs in background) |
+| `GET` | `/api/search/{id}` | Poll campaign status |
+| `GET` | `/api/campaigns/{id}/leads` | List leads for campaign |
+| `PATCH` | `/api/leads/{id}` | Update lead email fields |
+| `POST` | `/api/campaigns/{id}/export` | Export to Google Sheets |
+
+### POST /api/search
+
+```json
+{
+  "query": "pizza",
+  "location": "New York, NY",
+  "lat": 40.7128,
+  "lng": -74.006,
+  "radius": 50000,
+  "min_rating": 3.5
+}
+```
+
+Returns `{"campaign_id": 1, "status": "pending"}`.
+
+### PATCH /api/leads/{id}
+
+Allowlisted fields: `email`, `email_subject`, `email_body`, `angle_used`, `email_status`.
 
 ## Environment Variables
 
 | Variable | Description | Required |
 |----------|-------------|----------|
-| `GOOGLE_MAPS_API_KEY` | Places API key | ✅ |
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | Service account JSON (base64 or raw) | ✅ |
-| `DATABASE_URL` | PostgreSQL connection string | ✅ |
+| `GOOGLE_MAPS_API_KEY` | Google Places API (New) key | ✅ |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Service account key (base64 or raw JSON) | ✅ |
+| `DATABASE_URL` | PostgreSQL with async driver | ✅ |
 | `REDIS_URL` | Redis connection string | ✅ |
 | `NEXT_PUBLIC_API_URL` | Backend URL (frontend only) | ✅ |
 
@@ -206,70 +244,73 @@ Emails will send automatically in batches of 8 every 20 minutes, respecting Gmai
 
 ```
 LeadForge/
-├── backend/                    # FastAPI backend
-│   ├── main.py                # Entry point
-│   ├── config.py              # Environment config
-│   ├── database.py            # SQLAlchemy async engine
+├── backend/
+│   ├── main.py                  # FastAPI entry point
+│   ├── config.py                # Environment config
+│   ├── database.py              # SQLAlchemy async engine
 │   ├── models/
-│   │   ├── campaign.py        # Campaign schema
-│   │   └── lead.py            # Lead schema
+│   │   ├── campaign.py          # Campaign table model
+│   │   └── lead.py              # Lead table model
 │   ├── routers/
-│   │   ├── search.py          # POST /api/search
-│   │   ├── leads.py           # GET /api/campaigns/{id}/leads
-│   │   └── export.py          # POST /api/campaigns/{id}/export
+│   │   ├── search.py            # POST /api/search, GET /api/search/{id}
+│   │   ├── leads.py             # GET /api/campaigns/{id}/leads, PATCH /leads/{id}
+│   │   └── export.py            # POST /api/campaigns/{id}/export
 │   ├── workers/
-│   │   ├── grid_search.py     # Places API grid search
-│   │   ├── email_writer.py    # Angle bank template engine
-│   │   └── sheet_exporter.py  # Google Sheets export
-│   └── templates/             # Angle bank JSON files
-├── frontend/                   # Next.js dashboard
+│   │   ├── grid_search.py       # Places API grid search + dedup
+│   │   ├── email_writer.py      # Angle bank template engine
+│   │   └── sheet_exporter.py    # Google Sheets export
+│   └── templates/               # Angle bank JSON files
+├── frontend/
 │   ├── pages/
+│   │   ├── index.js
+│   │   ├── campaigns/[id].js
+│   │   └── export/[id].js
 │   ├── components/
+│   │   ├── SearchForm.js
+│   │   ├── ResultsTable.js
+│   │   ├── ScriptDisplay.js
+│   │   └── StatusBadge.js
 │   └── styles/
 ├── scripts/
-│   └── apps_script.gs         # Static Apps Script
-├── docker-compose.yml         # Local Postgres + Redis
-├── railway.json               # Railway config
-├── SESSION_SUMMARY.md
-└── AGENTS.md
+│   └── apps_script.gs
+├── docker-compose.yml
+├── Dockerfile
+├── railway.json
+└── .gitignore
 ```
-
-## Compliance
-
-- **CAN-SPAM**: Every email includes an unsubscribe option and sender identity
-- **Rate Limiting**: Apps Script batches sends (8 per 20 min) to protect sender reputation
-- **Deduplication**: Never re-contacts the same business across campaigns
-- **Data Privacy**: Lead data stored in your own Postgres database
 
 ## Limitations
 
-| Limitation | Detail |
-|-----------|--------|
-| **Gmail free quota** | 100 emails/day per account. Use Google Workspace for higher limits |
-| **Places API cap** | 60 results per query. Grid search compensates for full coverage |
-| **Email availability** | Google Maps doesn't expose emails — manual entry may be needed |
-| **API costs** | Places API charges per request (~$3-5/1000 leads at Contact Data tier) |
+| Area | Detail |
+|------|--------|
+| **Gmail quota** | 100 emails/day for free accounts. Google Workspace removes this |
+| **Places API cap** | 60 results per query. Grid search covers large areas with overlapping circles |
+| **Email discovery** | Google Maps doesn't expose emails. Manual entry may be needed |
+| **Places API costs** | Free tier covers ~$200/month usage (~50,000+ text searches) |
 
 ## FAQ
 
-**Q: Why Places API instead of scraping Google Maps?**
-A: Scraping violates Google's ToS, gets IPs banned, and breaks when Maps updates its UI. Places API is legal, stable, and returns clean structured data.
+**Places API vs scraping?**  
+Scraping violates Google ToS, gets IPs banned, and breaks on UI changes. Places API is legal, stable, and returns structured data.
 
-**Q: Do I need an AI API key?**
-A: No. Emails use smart templates with category-specific angles — no AI API required.
+**Do I need an AI key?**  
+No. Email generation uses category-specific angle banks with rotating templates. No AI API required.
 
-**Q: How many leads can I find per search?**
-A: Depends on the area and category. Grid search covers large areas by dividing them into overlapping circles. Typical results: 50-500 leads per city.
+**How are emails sent?**  
+Leads export to Google Sheets → paste the provided Apps Script → run `setupTrigger()`. It sends 8 emails every 20 minutes from your Gmail account.
 
-**Q: How does email sending work?**
-A: You export leads to Google Sheets, paste the provided Apps Script, and run `setupTrigger()`. It sends 8 emails every 20 minutes from your Gmail.
+**Duplicate prevention?**  
+Deduplication is enforced at the database level with a unique constraint on Google Place ID. Never contact the same business twice.
+
+**CAN-SPAM compliance?**  
+Every email includes an unsubscribe option, sender identity, and accurate subject lines. The Apps Script respects sending limits.
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](LICENSE).
 
 ---
 
 <div align="center">
-  <p>Built with Python, Next.js, and Google APIs</p>
+  <sub>Built with Python, Next.js, Google APIs, and ❤️</sub>
 </div>
