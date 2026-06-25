@@ -75,7 +75,7 @@ export default function CampaignPage() {
       </div>
 
       {/* Results */}
-      <ResultsTable leads={leads} campaignId={id} />
+      <ResultsTable leads={leads} campaignId={id as string} />
     </div>
   );
 }
