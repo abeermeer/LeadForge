@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/FastAPI-0.115-green?style=flat-square&logo=fastapi" alt="FastAPI">
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT License">
   <img src="https://img.shields.io/badge/status-active-success?style=flat-square" alt="Status">
-  <img src="https://img.shields.io/badge/coverage-100%25-brightgreen?style=flat-square" alt="Coverage">
+
 
   <h1>LeadForge</h1>
   <p><strong>Find businesses without websites. Generate personalized outreach. Automate via email.</strong></p>
@@ -12,7 +12,6 @@
 
   <p>
     <a href="#features">Features</a> •
-    <a href="#demo">Demo</a> •
     <a href="#quick-start">Quick Start</a> •
     <a href="#deployment">Deployment</a> •
     <a href="#usage">Usage</a> •
@@ -32,15 +31,7 @@
 - **Apps Script Automation** — Copy-paste script sends batch emails from your Gmail (8 per 20 min, designed with opt-out footer)
 - **Duplicate Prevention** — Dedup by Google Place ID across all campaigns
 - **Background Processing** — Search runs asynchronously; poll campaign status from the dashboard
-- **Live Deployment** — Backend on Railway, frontend on Vercel, auto-deploys from GitHub
-
-## Demo
-
-| Service | URL | Status |
-|---------|-----|--------|
-| Frontend | [frontend-alpha-teal-72.vercel.app](https://frontend-alpha-teal-72.vercel.app) | ✅ Live |
-| Backend | [leadforge-production-126b.up.railway.app](https://leadforge-production-126b.up.railway.app) | ✅ Live |
-| Health | [leadforge-production-126b.up.railway.app/api/health](https://leadforge-production-126b.up.railway.app/api/health) | `{"status":"ok"}` |
+- **CI/CD** — GitHub Actions runs backend + frontend tests on every push
 
 ## Architecture
 
@@ -86,6 +77,8 @@ Search Form → POST /api/search → Grid Search (Places API)
 | **APIs** | Google Places API (New), Google Sheets API v4 |
 | **Automation** | Google Apps Script (Gmail send, quota-aware) |
 | **Infrastructure** | Railway.app, Vercel, Docker Compose (local dev) |
+| **CI/CD** | GitHub Actions (backend + frontend tests on push) |
+| **Testing** | pytest (backend), Jest + RTL (frontend) |
 
 ## Quick Start
 
@@ -157,7 +150,7 @@ Set `NEXT_PUBLIC_API_URL` to your Railway backend URL (e.g. `https://leadforge-p
 1. Push to GitHub
 2. Create a Railway project → "Deploy from GitHub repo" → select `abeermeer/LeadForge`
 3. Add **PostgreSQL** plugin (DATABASE_URL auto-injected)
-4. Set remaining env vars: `GOOGLE_MAPS_API_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON`
+4. Set remaining env vars: `GOOGLE_MAPS_API_KEY`, `GOOGLE_SERVICE_ACCOUNT_JSON`, `API_KEY`
 5. Railway builds using the `Dockerfile` at repo root
 
 The included `railway.json` configures Dockerfile builder with 1 replica and ON_FAILURE restart policy.
@@ -200,10 +193,12 @@ Emails send in batches of 8 every 20 minutes, respecting Gmail's 100/day quota (
 
 ## API Reference
 
+All endpoints (except `/api/health`) require `X-API-Key` header if `API_KEY` is set. POST `/api/search` is rate-limited to 5 requests per minute.
+
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/health` | Health check |
-| `POST` | `/api/search` | Create search campaign (runs in background) |
+| `GET` | `/api/health` | Health check (no auth required) |
+| `POST` | `/api/search` | Create search campaign (rate-limited: 5/min) |
 | `GET` | `/api/search/{id}` | Poll campaign status |
 | `GET` | `/api/campaigns/{id}/leads` | List leads for campaign |
 | `PATCH` | `/api/leads/{id}` | Update lead email fields |
@@ -234,6 +229,7 @@ Allowlisted fields: `email`, `email_subject`, `email_body`, `angle_used`, `email
 |----------|-------------|----------|
 | `GOOGLE_MAPS_API_KEY` | Google Places API (New) key | ✅ |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | Service account key (base64 or raw JSON) | ✅ |
+| `API_KEY` | API key for auth (set to enable) | ❌ |
 | `DATABASE_URL` | PostgreSQL with async driver | ✅ |
 | `NEXT_PUBLIC_API_URL` | Backend URL (frontend only) | ✅ |
 
@@ -244,6 +240,7 @@ LeadForge/
 ├── backend/
 │   ├── main.py                  # FastAPI entry point
 │   ├── config.py                # Environment config
+│   ├── auth.py                  # API key authentication
 │   ├── database.py              # SQLAlchemy async engine
 │   ├── models/
 │   │   ├── campaign.py          # Campaign table model

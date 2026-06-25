@@ -1,12 +1,18 @@
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 from .database import init_db, async_session
 from .routers import search, leads, export
+from .auth import verify_api_key
 
 logger = logging.getLogger(__name__)
+
+limiter = Limiter(key_func=get_remote_address)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -15,6 +21,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="LeadForge", lifespan=lifespan)
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,9 +31,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(search.router, prefix="/api", tags=["search"])
-app.include_router(leads.router, prefix="/api", tags=["leads"])
-app.include_router(export.router, prefix="/api", tags=["export"])
+app.include_router(search.router, prefix="/api", tags=["search"], dependencies=[Depends(verify_api_key)])
+app.include_router(leads.router, prefix="/api", tags=["leads"], dependencies=[Depends(verify_api_key)])
+app.include_router(export.router, prefix="/api", tags=["export"], dependencies=[Depends(verify_api_key)])
 
 @app.get("/api/health")
 async def health():
