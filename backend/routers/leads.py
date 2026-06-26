@@ -4,12 +4,14 @@ from pydantic import BaseModel, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from slowapi import Limiter
-from slowapi.util import get_remote_address
 from ..database import get_session
 from ..models.lead import Lead
+from ..workers.email_writer import generate_email, load_templates
+from ..models.campaign import Campaign
+from ..auth import client_ip_key
 
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=client_ip_key)
 
 ALLOWED_FIELDS = {"email", "email_subject", "email_body", "angle_used", "email_status"}
 
@@ -49,6 +51,39 @@ async def get_leads(
     result = await db.execute(stmt)
     leads = result.scalars().all()
     return [l.to_dict() for l in leads]
+
+@router.post("/leads/{lead_id}/regenerate-email")
+@limiter.limit("10/minute")
+async def regenerate_lead_email(
+    request: Request,
+    lead_id: int,
+    db: AsyncSession = Depends(get_session),
+):
+    result = await db.execute(select(Lead).where(Lead.id == lead_id))
+    lead = result.scalar_one_or_none()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    campaign_result = await db.execute(select(Campaign).where(Campaign.id == lead.campaign_id))
+    campaign = campaign_result.scalar_one_or_none()
+    location = campaign.location if campaign else "your area"
+
+    templates = load_templates()
+    subject, body, angle = generate_email(
+        lead.name,
+        lead.category or "",
+        location,
+        lead.rating or 0,
+        lead.review_count or 0,
+        templates,
+    )
+    lead.email_subject = subject
+    lead.email_body = body
+    lead.angle_used = angle
+    lead.email_status = "generated"
+    await db.commit()
+
+    return lead.to_dict()
 
 @router.patch("/leads/{lead_id}")
 @limiter.limit("30/minute")

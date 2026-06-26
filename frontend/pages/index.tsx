@@ -1,31 +1,46 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Zap, Target, Users, Loader2, CheckCircle2, AlertCircle, TrendingUp, MapPin } from 'lucide-react';
 import SearchForm from '../components/SearchForm';
 import StatusBadge from '../components/StatusBadge';
+import { apiFetch } from '../lib/api';
+import toast from 'react-hot-toast';
 
 export default function Home() {
   const router = useRouter();
   const [campaign, setCampaign] = useState(null);
   const [status, setStatus] = useState(null);
   const [polling, setPolling] = useState(false);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
 
   const handleStart = (data) => {
     setCampaign(data);
     setPolling(true);
-    const interval = setInterval(async () => {
+    intervalRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/search/${data.campaign_id}`);
+        const res = await apiFetch(`/api/search/${data.campaign_id}`);
         const s = await res.json();
         setStatus(s);
         if (s.status === 'completed' || s.status === 'failed') {
-          clearInterval(interval);
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
           setPolling(false);
         }
       } catch {
-        clearInterval(interval);
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
         setPolling(false);
+        toast.error('Connection lost. Check your API endpoint.');
       }
     }, 2000);
   };

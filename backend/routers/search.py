@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from slowapi import Limiter
-from slowapi.util import get_remote_address
 from ..database import get_session
 from ..models.campaign import Campaign, CampaignStatus
 from ..workers.grid_search import run_grid_search
+from ..auth import client_ip_key
 
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=client_ip_key)
 
 class SearchRequest(BaseModel):
     query: str
@@ -42,6 +42,17 @@ async def create_search(
     background_tasks.add_task(run_grid_search, campaign.id, req, db)
 
     return {"campaign_id": campaign.id, "status": campaign.status}
+
+@router.get("/campaigns")
+async def list_campaigns(
+    db: AsyncSession = Depends(get_session),
+):
+    from sqlalchemy import select
+    result = await db.execute(
+        select(Campaign).order_by(Campaign.created_at.desc()).limit(50)
+    )
+    campaigns = result.scalars().all()
+    return [c.to_dict() for c in campaigns]
 
 @router.get("/search/{campaign_id}")
 async def get_search_status(

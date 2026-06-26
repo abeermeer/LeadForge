@@ -13,6 +13,7 @@ from .email_writer import generate_emails_for_campaign
 logger = logging.getLogger(__name__)
 
 PLACES_API_BASE = "https://places.googleapis.com/v1/places:searchText"
+GEOCODING_API_BASE = "https://maps.googleapis.com/maps/api/geocode/json"
 FIELDS_MASK = "places.id,places.displayName,places.formattedAddress,places.internationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.primaryType"
 
 def grid_circles(lat: float, lng: float, radius_m: int, step_m: int | None = None):
@@ -36,7 +37,7 @@ def grid_circles(lat: float, lng: float, radius_m: int, step_m: int | None = Non
         lat_c += dlat
     return circles
 
-async def search_places(session: aiohttp.ClientSession, lat: float, lng: float, query: str, radius: int, min_rating: float | None = None):
+async def search_places(session: aiohttp.ClientSession, lat: float, lng: float, query: str, radius: int, min_rating: float | None = None) -> tuple[list, bool]:
     headers = {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": GOOGLE_MAPS_API_KEY,
@@ -60,19 +61,39 @@ async def search_places(session: aiohttp.ClientSession, lat: float, lng: float, 
             if resp.status != 200:
                 text = await resp.text()
                 logger.error(f"Places API error {resp.status} at ({lat},{lng}): {text[:200]}")
-                return []
+                return [], True
             data = await resp.json()
             places = data.get("places", [])
-            return places
+            return places, False
     except asyncio.TimeoutError:
         logger.warning(f"Places API timeout at ({lat},{lng})")
-        return []
+        return [], True
     except aiohttp.ClientError as e:
         logger.error(f"Places API request failed at ({lat},{lng}): {e}")
-        return []
+        return [], True
     except Exception as e:
         logger.exception(f"Unexpected error in search_places at ({lat},{lng}): {e}")
-        return []
+        return [], True
+
+async def geocode_location(session: aiohttp.ClientSession, location: str) -> tuple[float, float] | None:
+    params = {
+        "address": location,
+        "key": GOOGLE_MAPS_API_KEY,
+    }
+    try:
+        async with session.get(GEOCODING_API_BASE, params=params) as resp:
+            if resp.status != 200:
+                logger.error(f"Geocoding API error {resp.status} for '{location}'")
+                return None
+            data = await resp.json()
+            if data.get("status") != "OK":
+                logger.error(f"Geocoding failed for '{location}': {data.get('status')}")
+                return None
+            loc = data["results"][0]["geometry"]["location"]
+            return (loc["lat"], loc["lng"])
+    except Exception as e:
+        logger.exception(f"Geocoding exception for '{location}': {e}")
+        return None
 
 async def run_grid_search(campaign_id: int, req, db_session: AsyncSession):
     async with async_session() as db:
@@ -84,9 +105,22 @@ async def run_grid_search(campaign_id: int, req, db_session: AsyncSession):
         campaign.status = CampaignStatus.RUNNING.value
         await db.commit()
 
-        lat = req.lat or 40.7128
-        lng = req.lng or -74.0060
+        lat = req.lat
+        lng = req.lng
         radius = req.radius or 50000
+
+        if lat is None or lng is None:
+            async with aiohttp.ClientSession() as geo_session:
+                coords = await geocode_location(geo_session, req.location)
+            if coords:
+                lat, lng = coords
+                campaign.lat = lat
+                campaign.lng = lng
+                await db.commit()
+                logger.info(f"Geocoded '{req.location}' → ({lat}, {lng})")
+            else:
+                lat, lng = 40.7128, -74.0060
+                logger.warning(f"Geocoding failed for '{req.location}', falling back to NYC ({lat}, {lng})")
 
         centers = grid_circles(lat, lng, radius)
         seen_place_ids = set()
@@ -96,6 +130,8 @@ async def run_grid_search(campaign_id: int, req, db_session: AsyncSession):
             seen_place_ids.add(row[0])
 
         all_leads = []
+        total_errors = 0
+        total_attempts = 0
         async with aiohttp.ClientSession() as session:
             tasks = []
             for clat, clng in centers:
@@ -104,7 +140,10 @@ async def run_grid_search(campaign_id: int, req, db_session: AsyncSession):
             for i in range(0, len(tasks), batch_size):
                 batch = tasks[i:i+batch_size]
                 results = await asyncio.gather(*batch)
-                for places in results:
+                for places, is_error in results:
+                    total_attempts += 1
+                    if is_error:
+                        total_errors += 1
                     for place in places:
                         pid = place.get("id")
                         if not pid or pid in seen_place_ids:
@@ -134,7 +173,11 @@ async def run_grid_search(campaign_id: int, req, db_session: AsyncSession):
                 await db.commit()
 
         campaign.total_leads = len(all_leads)
-        campaign.status = CampaignStatus.COMPLETED.value
+        if total_attempts > 0 and total_errors == total_attempts:
+            campaign.status = CampaignStatus.FAILED.value
+            logger.error(f"Campaign {campaign_id}: all {total_errors} Places API calls failed")
+        else:
+            campaign.status = CampaignStatus.COMPLETED.value
         await db.commit()
 
     await generate_emails_for_campaign(campaign_id)

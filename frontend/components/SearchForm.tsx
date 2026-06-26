@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Search, MapPin, SlidersHorizontal, Loader2, Target } from 'lucide-react';
+import { apiFetch } from '../lib/api';
+import toast from 'react-hot-toast';
 
 interface SearchFormProps {
   onStart: (data: { campaign_id: number; status: string }) => void;
@@ -18,7 +20,7 @@ export default function SearchForm({ onStart }: SearchFormProps) {
     if (!query || !location) return;
     setLoading(true);
     try {
-      const res = await fetch('/api/search', {
+      const res = await apiFetch('/api/search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -32,6 +34,7 @@ export default function SearchForm({ onStart }: SearchFormProps) {
       onStart(data);
     } catch (err) {
       console.error(err);
+      toast.error('Search failed. Check your API key and try again.');
     } finally {
       setLoading(false);
     }

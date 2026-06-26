@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Users, FileCode, Zap, Menu, ChevronRight } from 'lucide-react';
+import { Search, Users, FileCode, Zap, Menu, ChevronRight, Clock } from 'lucide-react';
 import { useState, ReactNode } from 'react';
 
 interface LayoutProps {
@@ -34,6 +34,14 @@ export default function Layout({ children, campaignId }: LayoutProps) {
           >
             <Search className="w-4 h-4" />
             New Search
+          </button>
+
+          <button
+            onClick={() => { router.push('/campaigns'); setSidebarOpen(false); }}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 ${router.pathname === '/campaigns' ? 'bg-ember/10 text-ember border border-ember/20' : 'text-muted hover:text-pearl hover:bg-white/5'}`}
+          >
+            <Clock className="w-4 h-4" />
+            Campaigns
           </button>
 
           {campaignId && (

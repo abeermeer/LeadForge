@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, Upload, FileSpreadsheet, CheckCircle2 } from 'lucide-react';
 import ScriptDisplay from '../../components/ScriptDisplay';
 import StatusBadge from '../../components/StatusBadge';
+import { apiFetch } from '../../lib/api';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 
@@ -19,8 +20,8 @@ export default function ExportPage() {
     if (!id) return;
     try {
       const [campRes, leadsRes] = await Promise.all([
-        fetch(`/api/search/${id}`),
-        fetch(`/api/campaigns/${id}/leads`),
+        apiFetch(`/api/search/${id}`),
+        apiFetch(`/api/campaigns/${id}/leads`),
       ]);
       setCampaign(await campRes.json());
       setLeads(await leadsRes.json());
@@ -36,7 +37,7 @@ export default function ExportPage() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const res = await fetch(`/api/campaigns/${id}/export`, { method: 'POST' });
+      const res = await apiFetch(`/api/campaigns/${id}/export`, { method: 'POST' });
       const data = await res.json();
       if (data.sheet_url) {
         setSheetUrl(data.sheet_url);

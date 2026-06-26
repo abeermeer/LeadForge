@@ -1,6 +1,6 @@
 import os
 import logging
-from fastapi import Security, HTTPException, status
+from fastapi import Security, HTTPException, status, Request
 from fastapi.security import APIKeyHeader
 from .config import API_KEY
 
@@ -17,3 +17,9 @@ async def verify_api_key(api_key: str = Security(api_key_header)):
             detail="Invalid or missing API key",
         )
     return True
+
+def client_ip_key(request: Request) -> str:
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"

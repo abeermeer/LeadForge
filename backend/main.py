@@ -5,17 +5,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 from .config import CORS_ORIGINS, MAX_BODY_SIZE
 from .database import init_db, async_session
 from .routers import search, leads, export
-from .auth import verify_api_key
+from .auth import verify_api_key, client_ip_key
 
 logger = logging.getLogger(__name__)
 
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=client_ip_key)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

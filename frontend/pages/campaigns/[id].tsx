@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { ArrowLeft, Loader2, MapPin } from 'lucide-react';
 import ResultsTable from '../../components/ResultsTable';
 import StatusBadge from '../../components/StatusBadge';
+import { apiFetch } from '../../lib/api';
+import toast from 'react-hot-toast';
 
 export default function CampaignPage() {
   const router = useRouter();
@@ -15,13 +17,14 @@ export default function CampaignPage() {
     if (!id) return;
     try {
       const [campRes, leadsRes] = await Promise.all([
-        fetch(`/api/search/${id}`),
-        fetch(`/api/campaigns/${id}/leads`),
+        apiFetch(`/api/search/${id}`),
+        apiFetch(`/api/campaigns/${id}/leads`),
       ]);
       setCampaign(await campRes.json());
       setLeads(await leadsRes.json());
     } catch (e) {
       console.error(e);
+      toast.error('Failed to load campaign data');
     } finally {
       setLoading(false);
     }

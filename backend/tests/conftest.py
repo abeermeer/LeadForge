@@ -20,13 +20,13 @@ import pytest
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter
-from slowapi.util import get_remote_address
+from backend.auth import client_ip_key
 
 from backend.routers.search import router as search_router
 from backend.routers.leads import router as leads_router
 from backend.routers.export import router as export_router
 
-test_limiter = Limiter(key_func=get_remote_address)
+test_limiter = Limiter(key_func=client_ip_key)
 
 @pytest.fixture
 def app():

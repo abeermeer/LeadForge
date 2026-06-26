@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Edit3, Mail, Star, ChevronDown, ChevronUp, MessageSquare, Phone } from 'lucide-react';
+import { Edit3, Mail, Star, ChevronDown, ChevronUp, MessageSquare, Phone, RefreshCw } from 'lucide-react';
 import StatusBadge from './StatusBadge';
+import { apiFetch } from '../lib/api';
 import toast from 'react-hot-toast';
 
 interface Lead {
@@ -42,7 +43,7 @@ export default function ResultsTable({ leads, campaignId }: ResultsTableProps) {
 
   const handleSave = async (leadId: number) => {
     try {
-      const res = await fetch(`/api/leads/${leadId}`, {
+      const res = await apiFetch(`/api/leads/${leadId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(edits),
@@ -58,6 +59,23 @@ export default function ResultsTable({ leads, campaignId }: ResultsTableProps) {
       }
     } catch {
       toast.error('Failed to save');
+    }
+  };
+
+  const handleRegenerateEmail = async (leadId: number) => {
+    try {
+      const res = await apiFetch(`/api/leads/${leadId}/regenerate-email`, { method: 'POST' });
+      if (res.ok) {
+        const updated = await res.json();
+        setLocalLeads((prev) =>
+          prev.map((l) => (l.id === leadId ? { ...l, ...updated } : l))
+        );
+        toast.success('Email regenerated');
+      } else {
+        toast.error('Regeneration failed');
+      }
+    } catch {
+      toast.error('Failed to regenerate email');
     }
   };
 
@@ -203,13 +221,22 @@ export default function ResultsTable({ leads, campaignId }: ResultsTableProps) {
                         </button>
                       </div>
                     ) : (
-                      <button
-                        className="btn-icon btn-ghost"
-                        onClick={() => handleEdit(lead)}
-                        title="Edit"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          className="btn-icon btn-ghost"
+                          onClick={() => handleRegenerateEmail(lead.id)}
+                          title="Regenerate Email"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          className="btn-icon btn-ghost"
+                          onClick={() => handleEdit(lead)}
+                          title="Edit"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     )}
                   </td>
                 </motion.tr>
