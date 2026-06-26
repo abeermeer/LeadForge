@@ -82,56 +82,54 @@ Search Form → POST /api/search → Grid Search (Places API)
 
 ## Quick Start
 
-### Prerequisites
+### 1. Enable Google APIs
 
-- Python 3.11+, Node.js 18+
-- Docker Desktop
-- Google Cloud project with [Places API (New)](https://console.cloud.google.com/apis/library/places.googleapis.com) enabled
-- Google Service Account with [Sheets API](https://console.cloud.google.com/apis/library/sheets.googleapis.com) enabled
+In [Google Cloud Console](https://console.cloud.google.com/), create a project and enable:
 
-### Setup
+- [Places API (New)](https://console.cloud.google.com/apis/library/places.googleapis.com) — for lead sourcing
+- [Sheets API](https://console.cloud.google.com/apis/library/sheets.googleapis.com) — for spreadsheet export
 
-```bash
-# Clone
-git clone https://github.com/abeermeer/LeadForge.git
-cd LeadForge
+Create an **API key** (for Places API) and a **Service Account JSON key** (for Sheets API).
 
-# Backend
-cd backend
-pip install -r requirements.txt
+### 2. Deploy Backend (Railway)
 
-# Frontend
-cd ../frontend
-npm install
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/leadforge)
 
-# Start local infrastructure (Postgres only)
-cd ..
-docker compose up -d
-```
-
-### Configuration
-
-Create `backend/.env`:
+Or manually:
+1. Fork/clone this repo
+2. Create a Railway project → **Deploy from GitHub repo**
+3. Add **PostgreSQL** plugin → auto-links `DATABASE_URL`
+4. Set env vars:
 
 ```env
 GOOGLE_MAPS_API_KEY=your_places_api_key
-GOOGLE_SERVICE_ACCOUNT_JSON=your_base64_service_account_json
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/leadforge
+GOOGLE_SERVICE_ACCOUNT_JSON=your_base64_or_raw_json
+API_KEY=your_secret_key          # optional — set to enable X-API-Key auth
 ```
 
-### Run
+### 3. Deploy Frontend (Vercel)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/abeermeer/LeadForge&root-directory=frontend)
+
+Set env vars in Vercel:
+
+```env
+NEXT_PUBLIC_API_URL=https://your-backend.up.railway.app
+NEXT_PUBLIC_API_KEY=your_secret_key   # only if API_KEY is set on backend
+```
+
+### 4. Or Run Locally
 
 ```bash
-# Terminal 1 — Backend
-cd backend
-uvicorn backend.main:app --reload --port 8000
-
-# Terminal 2 — Frontend
-cd frontend
-npm run dev
+git clone https://github.com/abeermeer/LeadForge.git
+cd LeadForge
+docker compose up -d            # starts Postgres
+cd backend && pip install -r requirements.txt
+cp .env.example .env            # fill in your keys
+uvicorn backend.main:app --reload --port 8000  # terminal 1
+cd ../frontend && npm install
+npm run dev                     # terminal 2 — http://localhost:3000
 ```
-
-Open [http://localhost:3000](http://localhost:3000).
 
 ## Deployment
 
@@ -232,6 +230,7 @@ Allowlisted fields: `email`, `email_subject`, `email_body`, `angle_used`, `email
 | `API_KEY` | API key for auth (set to enable) | ❌ |
 | `DATABASE_URL` | PostgreSQL with async driver | ✅ |
 | `NEXT_PUBLIC_API_URL` | Backend URL (frontend only) | ✅ |
+| `NEXT_PUBLIC_API_KEY` | Must match `API_KEY` for frontend auth (frontend only) | ❌ |
 
 ## Project Structure
 
@@ -240,33 +239,38 @@ LeadForge/
 ├── backend/
 │   ├── main.py                  # FastAPI entry point
 │   ├── config.py                # Environment config
-│   ├── auth.py                  # API key authentication
+│   ├── auth.py                  # API key authentication + client IP
 │   ├── database.py              # SQLAlchemy async engine
 │   ├── models/
-│   │   ├── campaign.py          # Campaign table model
-│   │   └── lead.py              # Lead table model
+│   │   ├── campaign.py          # Campaign + CampaignStatus (PENDING/RUNNING/COMPLETED/FAILED)
+│   │   ├── lead.py              # Lead table
+│   │   └── audit_log.py         # Audit log table
 │   ├── routers/
-│   │   ├── search.py            # POST /api/search, GET /api/search/{id}
-│   │   ├── leads.py             # GET /api/campaigns/{id}/leads, PATCH /leads/{id}
+│   │   ├── search.py            # POST /api/search, GET /api/search/{id}, GET /api/campaigns
+│   │   ├── leads.py             # GET/PATCH leads, POST regenerate-email
 │   │   └── export.py            # POST /api/campaigns/{id}/export
 │   ├── workers/
-│   │   ├── grid_search.py       # Places API grid search + dedup
+│   │   ├── grid_search.py       # Geocoding + Places API grid search + dedup
 │   │   ├── email_writer.py      # Angle bank template engine
 │   │   └── sheet_exporter.py    # Google Sheets export
-│   └── templates/               # Angle bank JSON files
+│   ├── templates/               # Angle bank JSON files (restaurant, clinic, retail, generic)
+│   └── tests/                   # pytest (12 tests)
 ├── frontend/
 │   ├── pages/
-│   │   ├── index.js
-│   │   ├── campaigns/[id].js
-│   │   └── export/[id].js
+│   │   ├── index.tsx            # Search form + polling
+│   │   ├── campaigns/index.tsx  # Campaign history list
+│   │   ├── campaigns/[id].tsx   # Campaign detail + results
+│   │   └── export/[id].tsx      # Sheets export + Apps Script
 │   ├── components/
-│   │   ├── SearchForm.js
-│   │   ├── ResultsTable.js
-│   │   ├── ScriptDisplay.js
-│   │   └── StatusBadge.js
-│   └── styles/
+│   │   ├── Layout.tsx           # Sidebar nav
+│   │   ├── SearchForm.tsx       # Search input with filters
+│   │   ├── ResultsTable.tsx     # Inline editable leads + regenerate email
+│   │   ├── ScriptDisplay.tsx    # Apps Script copy/instructions
+│   │   └── StatusBadge.tsx      # Campaign status indicator
+│   └── lib/api.ts              # apiFetch wrapper (auto-adds X-API-Key)
 ├── scripts/
 │   └── apps_script.gs
+├── .github/workflows/ci.yml    # GitHub Actions (pytest + Jest, Postgres service)
 ├── docker-compose.yml
 ├── Dockerfile
 ├── railway.json
