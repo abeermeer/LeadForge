@@ -58,7 +58,19 @@ def app_with_key():
     import backend.config
     importlib.reload(backend.config)
 
+    import backend.auth
+    import backend.routers.search
+    import backend.routers.leads
+    import backend.routers.export
+    importlib.reload(backend.auth)
+    importlib.reload(backend.routers.search)
+    importlib.reload(backend.routers.leads)
+    importlib.reload(backend.routers.export)
+
     from backend.auth import verify_api_key
+    from backend.routers.search import router as search_router
+    from backend.routers.leads import router as leads_router
+    from backend.routers.export import router as export_router
 
     test_app = FastAPI(title="LeadForge-Test-Auth")
     test_app.state.limiter = test_limiter
