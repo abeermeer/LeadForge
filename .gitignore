@@ -36,7 +36,7 @@ data/*.csv
 *.csv
 
 # Internal docs (not for public)
-SESSION_SUMMARY.md
+session-summary.md
 AGENTS.md
 
 # Env
