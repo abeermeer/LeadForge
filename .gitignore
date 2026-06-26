@@ -35,9 +35,6 @@ pgdata/
 data/*.csv
 *.csv
 
-# Internal docs (not for public)
-session-summary.md
-AGENTS.md
 
 # Env
 backend/.env
